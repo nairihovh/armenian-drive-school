@@ -1,6 +1,8 @@
 import { CategoryCard } from "./CategoryCard";
 import { useCategories } from "@/hooks/useCategories";
 import { Loader2, Shield, AlertTriangle, Construction, Gauge, MapPin, Siren, SignalHigh, Car } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const iconMap: Record<string, any> = {
   Shield,
@@ -27,6 +29,7 @@ const defaultColors = [
 
 export const TestCategories = () => {
   const { data: categories, isLoading, error } = useCategories();
+  const navigate = useNavigate();
 
   if (isLoading) {
     return (
@@ -79,6 +82,16 @@ export const TestCategories = () => {
               />
             );
           })}
+        </div>
+        
+        <div className="text-center mt-12">
+          <Button 
+            size="lg" 
+            className="btn-hero"
+            onClick={() => navigate("/categories")}
+          >
+            Դիտել բոլոր կատեգորիաները
+          </Button>
         </div>
       </div>
     </section>

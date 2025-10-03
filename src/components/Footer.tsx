@@ -1,6 +1,6 @@
 import { Car } from "lucide-react";
 
-export const Footer = () => {
+const Footer = () => {
   return (
     <footer className="border-t bg-card py-12">
       <div className="container mx-auto px-4">
@@ -48,3 +48,5 @@ export const Footer = () => {
     </footer>
   );
 };
+
+export default Footer;

@@ -1,5 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+export { useCategories, type Category } from "./useCategories";
+
+export interface Question {
+  id: string;
+  category_id: string;
+  question_text: string;
+  question_text_hy: string;
+  question_image: string | null;
+  explanation: string | null;
+  explanation_hy: string | null;
+  difficulty_level: number;
+  answers: Answer[];
+}
 
 export interface Answer {
   id: string;
@@ -10,21 +23,9 @@ export interface Answer {
   order_index: number;
 }
 
-export interface Question {
-  id: string;
-  category_id: string | null;
-  question_text: string;
-  question_text_hy: string;
-  question_image: string | null;
-  explanation: string | null;
-  explanation_hy: string | null;
-  difficulty_level: number;
-  answers: Answer[];
-}
-
-export const useQuestions = (categoryId: string, limit?: number) => {
+export const useQuestionsByCategory = (categoryId: string | null) => {
   return useQuery({
-    queryKey: ["questions", categoryId, limit],
+    queryKey: ["questions", categoryId],
     queryFn: async () => {
       let query = supabase
         .from("questions")
@@ -32,50 +33,38 @@ export const useQuestions = (categoryId: string, limit?: number) => {
           *,
           answers (*)
         `)
-        .eq("is_active", true)
-        .eq("category_id", categoryId)
-        .order("created_at", { ascending: false });
+        .eq("is_active", true);
 
-      if (limit) {
-        query = query.limit(limit);
+      if (categoryId) {
+        query = query.eq("category_id", categoryId);
       }
 
       const { data, error } = await query;
-
       if (error) throw error;
       return data as Question[];
     },
+    enabled: !!categoryId,
   });
 };
 
-export const useRandomQuestions = (categoryId: string, count: number = 10) => {
+export const useRandomQuestions = (categoryId: string, count: number = 20) => {
   return useQuery({
     queryKey: ["random-questions", categoryId, count],
     queryFn: async () => {
-      // First get all question IDs for this category
-      const { data: allQuestions, error: fetchError } = await supabase
-        .from("questions")
-        .select("id")
-        .eq("is_active", true)
-        .eq("category_id", categoryId);
-
-      if (fetchError) throw fetchError;
-      
-      // Randomly select question IDs
-      const shuffled = allQuestions?.sort(() => 0.5 - Math.random());
-      const selectedIds = shuffled?.slice(0, count).map(q => q.id) || [];
-
-      // Fetch full question data with answers
       const { data, error } = await supabase
         .from("questions")
         .select(`
           *,
           answers (*)
         `)
-        .in("id", selectedIds);
+        .eq("category_id", categoryId)
+        .eq("is_active", true);
 
       if (error) throw error;
-      return data as Question[];
+
+      // Shuffle and take first 'count' questions
+      const shuffled = (data as Question[]).sort(() => Math.random() - 0.5);
+      return shuffled.slice(0, Math.min(count, shuffled.length));
     },
     enabled: !!categoryId,
   });

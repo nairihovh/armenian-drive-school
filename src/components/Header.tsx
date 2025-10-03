@@ -2,7 +2,7 @@ import { Car, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 
-export const Header = () => {
+const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
@@ -70,3 +70,5 @@ export const Header = () => {
     </header>
   );
 };
+
+export default Header;
