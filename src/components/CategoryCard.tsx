@@ -1,0 +1,42 @@
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, LucideIcon } from "lucide-react";
+
+interface CategoryCardProps {
+  title: string;
+  description: string;
+  questionCount: number;
+  icon: LucideIcon;
+  color: string;
+}
+
+export const CategoryCard = ({ 
+  title, 
+  description, 
+  questionCount, 
+  icon: Icon,
+  color 
+}: CategoryCardProps) => {
+  return (
+    <Card className="card-elevated group cursor-pointer">
+      <CardHeader>
+        <div className={`mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg ${color}`}>
+          <Icon className="h-6 w-6 text-white" />
+        </div>
+        <CardTitle className="text-xl">{title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="mb-4 text-sm text-muted-foreground">{description}</p>
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium text-muted-foreground">
+            {questionCount} հարց
+          </span>
+          <Button variant="ghost" size="sm" className="group-hover:text-primary">
+            Սկսել
+            <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
