@@ -10,6 +10,20 @@ import { Clock, CheckCircle2 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
+// Function to decode HTML entities
+const decodeHtmlEntities = (text: string) => {
+  const textarea = document.createElement('textarea');
+  textarea.innerHTML = text;
+  let decoded = textarea.value;
+  
+  // Handle escaped quotes that might not be properly decoded
+  decoded = decoded.replace(/\\&quot;/g, '"');
+  decoded = decoded.replace(/&quot;/g, '"');
+  decoded = decoded.replace(/\\"/g, '"');
+  
+  return decoded;
+};
+
 export default function TestPage() {
   const { categoryId } = useParams<{ categoryId: string }>();
   const navigate = useNavigate();
@@ -116,7 +130,7 @@ export default function TestPage() {
         </div>
 
         {/* Question Card */}
-        <Card className="p-6 md:p-8 mb-8 card-elevated">
+        <Card className="p-6 md:p-8 mb-8">
           {currentQuestion.question_image && (
             <img
               src={currentQuestion.question_image}
@@ -125,9 +139,10 @@ export default function TestPage() {
             />
           )}
           
-          <h2 className="text-xl md:text-2xl font-semibold mb-6">
-            {currentQuestion.question_text_hy}
-          </h2>
+          <div 
+            className="text-xl md:text-2xl font-semibold mb-6"
+            dangerouslySetInnerHTML={{ __html: decodeHtmlEntities(currentQuestion.question_text_hy) }}
+          />
 
           <RadioGroup
             value={selectedAnswers[currentQuestion._id] || ""}
@@ -137,18 +152,26 @@ export default function TestPage() {
             {currentQuestion.answers
               .sort((a, b) => a.order_index - b.order_index)
               .map((answer) => (
-                <div
+                <Label
                   key={answer._id}
+                  htmlFor={answer._id}
                   className="flex items-center space-x-3 p-4 rounded-lg border-2 border-border hover:border-primary transition-colors cursor-pointer"
                 >
                   <RadioGroupItem value={answer._id} id={answer._id} />
-                  <Label
-                    htmlFor={answer._id}
-                    className="flex-1 cursor-pointer text-base md:text-lg"
-                  >
-                    {answer.answer_text_hy}
-                  </Label>
-                </div>
+                  <div className="flex-1 cursor-pointer text-base md:text-lg"
+                    dangerouslySetInnerHTML={{ __html: decodeHtmlEntities(answer.answer_text_hy) }}
+                  />
+                </Label>
+                // <div
+                //   key={answer._id}
+                //   className="flex items-center space-x-3 p-4 rounded-lg border-2 border-border hover:border-primary transition-colors cursor-pointer"
+                // >
+                //   <RadioGroupItem value={answer._id} id={answer._id} />
+                //     htmlFor={answer._id}
+                //     className="flex-1 cursor-pointer text-base md:text-lg"
+                //     dangerouslySetInnerHTML={{ __html: decodeHtmlEntities(answer.answer_text_hy) }}
+                // </div>
+                  // />
               ))}
           </RadioGroup>
         </Card>

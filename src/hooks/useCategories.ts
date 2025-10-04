@@ -3,12 +3,12 @@ import { queryMongoDB } from "./useMongoDB";
 
 export interface Category {
   _id: string;
-  name: string;
-  name_hy: string;
+  id: number;
+  title: string;
   description?: string;
-  icon?: string;
-  order_index?: number;
-  is_active?: boolean;
+  image?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export const useCategories = () => {
@@ -17,10 +17,10 @@ export const useCategories = () => {
     queryFn: async () => {
       const result = await queryMongoDB({
         collection: "questions_categories",
-        operation: "find",
-        query: { is_active: true }
+        operation: "find"
       });
-      return result.data as Category[];
+      console.log('Categories result:', result);
+      return result as Category[];
     },
   });
 };

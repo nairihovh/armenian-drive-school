@@ -4,21 +4,30 @@ export { useCategories, type Category } from "./useCategories";
 
 export interface Question {
   _id: string;
+  id: string;
   category_id: string;
-  question_text: string;
-  question_text_hy: string;
-  question_image?: string | null;
-  explanation?: string | null;
-  explanation_hy?: string | null;
-  difficulty_level?: number;
-  is_active?: boolean;
+  name: string;
+  question: string;
+  description?: string;
+  multiple_answers?: boolean;
+  created_at?: string;
+  updated_at?: string;
   answers: Answer[];
+  // Mapped fields for frontend
+  question_text_hy: string;
+  question_image?: string;
 }
 
 export interface Answer {
   _id: string;
+  id: string;
   question_id: string;
-  answer_text: string;
+  answer: string;
+  is_right: string;
+  sort: number;
+  created_at?: string;
+  updated_at?: string;
+  // Mapped fields for frontend
   answer_text_hy: string;
   is_correct: boolean;
   order_index: number;
@@ -28,7 +37,7 @@ export const useQuestionsByCategory = (categoryId: string | null) => {
   return useQuery({
     queryKey: ["questions", categoryId],
     queryFn: async () => {
-      const query = categoryId ? { category_id: categoryId, is_active: true } : { is_active: true };
+      const query = categoryId ? { category_id: categoryId } : {};
       
       const questionsResult = await queryMongoDB({
         collection: "questions",
@@ -36,16 +45,33 @@ export const useQuestionsByCategory = (categoryId: string | null) => {
         query
       });
 
-      const questions = questionsResult.data as Question[];
+      const questions = questionsResult as Question[];
 
-      // Fetch answers for each question
+      // Fetch answers for each question and map the data
       for (const question of questions) {
         const answersResult = await queryMongoDB({
           collection: "answers",
           operation: "find",
-          query: { question_id: question._id }
+          query: { question_id: question.id }
         });
-        question.answers = answersResult.data as Answer[];
+        
+        // Map answers to frontend format
+        const mappedAnswers = (answersResult as any[]).map(answer => ({
+          ...answer,
+          answer_text_hy: answer.answer,
+          is_correct: answer.is_right === "1",
+          order_index: answer.sort
+        }));
+        
+        question.answers = mappedAnswers;
+        
+        // Map question to frontend format
+        question.question_text_hy = question.question;
+        // Extract image from HTML if present
+        const imgMatch = question.question.match(/<img[^>]+src="([^"]+)"/);
+        if (imgMatch) {
+          question.question_image = imgMatch[1];
+        }
       }
 
       return questions;
@@ -61,19 +87,35 @@ export const useRandomQuestions = (categoryId: string, count: number = 20) => {
       const questionsResult = await queryMongoDB({
         collection: "questions",
         operation: "find",
-        query: { category_id: categoryId, is_active: true }
+        query: { category_id: categoryId }
       });
+      const questions = questionsResult as Question[];
 
-      const questions = questionsResult.data as Question[];
-
-      // Fetch answers for each question
+      // Fetch answers for each question and map the data
       for (const question of questions) {
         const answersResult = await queryMongoDB({
           collection: "answers",
           operation: "find",
-          query: { question_id: question._id }
+          query: { question_id: question.id }
         });
-        question.answers = answersResult.data as Answer[];
+        
+        // Map answers to frontend format
+        const mappedAnswers = (answersResult as any[]).map(answer => ({
+          ...answer,
+          answer_text_hy: answer.answer,
+          is_correct: answer.is_right === "1",
+          order_index: answer.sort
+        }));
+        
+        question.answers = mappedAnswers;
+        
+        // Map question to frontend format
+        question.question_text_hy = question.question;
+        // Extract image from HTML if present
+        const imgMatch = question.question.match(/<img[^>]+src="([^"]+)"/);
+        if (imgMatch) {
+          question.question_image = imgMatch[1];
+        }
       }
 
       // Shuffle and take first 'count' questions

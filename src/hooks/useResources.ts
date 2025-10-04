@@ -3,15 +3,8 @@ import { queryMongoDB } from "./useMongoDB";
 
 export interface Resource {
   _id: string;
-  title: string;
-  title_hy: string;
-  description?: string;
-  description_hy?: string;
-  resource_type: "video" | "pdf" | "article" | "image" | "link";
-  resource_url: string;
-  category_id?: string;
-  thumbnail_url?: string;
-  is_active?: boolean;
+  id: number;
+  slug: string;
 }
 
 export const useResources = (categoryId?: string) => {
@@ -19,8 +12,8 @@ export const useResources = (categoryId?: string) => {
     queryKey: ["resources", categoryId],
     queryFn: async () => {
       const query = categoryId 
-        ? { category_id: categoryId, is_active: true }
-        : { is_active: true };
+        ? { category_id: categoryId }
+        : {};
 
       const result = await queryMongoDB({
         collection: "resources",
@@ -28,7 +21,7 @@ export const useResources = (categoryId?: string) => {
         query
       });
 
-      return result.data as Resource[];
+      return result as Resource[];
     },
   });
 };

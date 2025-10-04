@@ -8,12 +8,20 @@ import Footer from "@/components/Footer";
 
 export default function CategoriesPage() {
   const navigate = useNavigate();
-  const { data: categories, isLoading } = useCategories();
+  const { data: categories, isLoading, error } = useCategories();
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-pulse text-xl">Բեռնում...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-red-500 text-xl">Սխալ: {error.message}</div>
       </div>
     );
   }
@@ -38,7 +46,7 @@ export default function CategoriesPage() {
               <Card
                 key={category._id}
                 className="p-6 hover-scale card-elevated cursor-pointer group"
-                onClick={() => navigate(`/test/${category._id}`)}
+                onClick={() => navigate(`/test/${category.id}`)}
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -48,7 +56,7 @@ export default function CategoriesPage() {
                 </div>
                 
                 <h3 className="text-xl font-bold mb-2 group-hover:text-primary transition-colors">
-                  {category.name_hy}
+                  {category.title}
                 </h3>
                 
                 {category.description && (
@@ -59,7 +67,7 @@ export default function CategoriesPage() {
                 
                 <Button className="w-full btn-hero" onClick={(e) => {
                   e.stopPropagation();
-                  navigate(`/test/${category._id}`);
+                  navigate(`/test/${category.id}`);
                 }}>
                   Սկսել թեստը
                 </Button>

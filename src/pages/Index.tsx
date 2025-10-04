@@ -2,6 +2,7 @@ import Header from "@/components/Header";
 import { HeroSection } from "@/components/HeroSection";
 import { TestCategories } from "@/components/TestCategories";
 import { FeaturesSection } from "@/components/FeaturesSection";
+import { APITest } from "@/components/APITest";
 import Footer from "@/components/Footer";
 
 const Index = () => {

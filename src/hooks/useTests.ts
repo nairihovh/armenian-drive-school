@@ -3,14 +3,12 @@ import { queryMongoDB } from "./useMongoDB";
 
 export interface Test {
   _id: string;
-  title: string;
-  title_hy: string;
+  id: number;
+  name: string;
   description?: string;
-  description_hy?: string;
-  category_id?: string;
-  time_limit_minutes?: number;
-  passing_score?: number;
-  is_active?: boolean;
+  image?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export const useTests = (categoryId?: string) => {
@@ -18,8 +16,8 @@ export const useTests = (categoryId?: string) => {
     queryKey: ["tests", categoryId],
     queryFn: async () => {
       const query = categoryId 
-        ? { category_id: categoryId, is_active: true }
-        : { is_active: true };
+        ? { category_id: categoryId }
+        : {};
 
       const result = await queryMongoDB({
         collection: "tests",
@@ -27,7 +25,7 @@ export const useTests = (categoryId?: string) => {
         query
       });
 
-      return result.data as Test[];
+      return result as Test[];
     },
   });
 };

@@ -1,8 +1,43 @@
-# Welcome to your Lovable project
+# Armenian Drive School
+
+A comprehensive driving test application for Armenian learners, featuring interactive questions, practice tests, and learning resources.
+
+## Project Structure
+
+- **Frontend**: React + TypeScript + Vite application
+- **MongoDB API**: Standalone Express.js API server
+- **Database**: MongoDB for data storage
+
+## Quick Start
+
+1. **Install dependencies:**
+   ```bash
+   npm install
+   npm run api:install
+   ```
+
+2. **Set up MongoDB API:**
+   ```bash
+   npm run api:setup
+   ```
+
+3. **Configure MongoDB connection:**
+   Edit `mongodb-api/.env` with your MongoDB URI
+
+4. **Start the application:**
+   ```bash
+   npm run start:all
+   ```
+
+## Documentation
+
+- [Setup Guide](SETUP_GUIDE.md) - Complete setup instructions
+- [MongoDB API Documentation](MONGODB_API_DOCS.md) - API reference
+- [MongoDB API README](mongodb-api/README.md) - API server details
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/0a1442e8-2ffd-40e0-8b97-e23550aafbde
+**Lovable URL**: https://lovable.dev/projects/0a1442e8-2ffd-40e0-8b97-e23550aafbde
 
 ## How can I edit this code?
 

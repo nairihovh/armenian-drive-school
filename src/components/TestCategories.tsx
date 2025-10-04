@@ -46,7 +46,7 @@ export const TestCategories = () => {
     return (
       <section id="tests" className="py-16 md:py-24">
         <div className="container mx-auto px-4 text-center">
-          <p className="text-destructive">Սխալ է տեղի ունեցել տվյալների բեռնման ժամանակ</p>
+          <p className="text-destructive">Սխալ է տեղի ունեցել տվյալների բեռնման ժամանակ: {error.message}</p>
         </div>
       </section>
     );
@@ -74,11 +74,12 @@ export const TestCategories = () => {
             return (
             <CategoryCard
               key={category._id}
-              title={category.name_hy}
+              title={category.title}
                 description={category.description || "Ուսումնասիրեք այս կատեգորիայի հարցերը"}
                 questionCount={0}
                 icon={IconComponent}
                 color={color}
+                categoryId={category.id}
               />
             );
           })}

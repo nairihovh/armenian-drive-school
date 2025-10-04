@@ -1,36 +1,60 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { MongoClient, ObjectId } from "https://deno.land/x/mongo@v0.32.0/mod.ts";
+const express = require('express');
+const { MongoClient, ObjectId } = require('mongodb');
+const cors = require('cors');
+const dotenv = require('dotenv');
+dotenv.config();
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-};
+const app = express();
+const PORT = process.env.PORT || 8000;
 
-interface MongoDBRequest {
-  collection: string;
-  operation: string;
-  query?: any;
-  data?: any;
-  options?: {
-    limit?: number;
-    skip?: number;
-    sort?: Record<string, 1 | -1>;
-    projection?: Record<string, 1 | 0>;
-  };
-  pipeline?: any[];
-  update?: any;
-  upsert?: boolean;
-  multi?: boolean;
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// MongoDB connection
+let db;
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!MONGODB_URI) {
+  console.error('MONGODB_URI environment variable is required');
+  process.exit(1);
 }
 
-interface PaginationOptions {
-  page?: number;
-  limit?: number;
-  sort?: Record<string, 1 | -1>;
+// Connect to MongoDB
+async function connectToMongoDB() {
+  try {
+    const client = new MongoClient(MONGODB_URI);
+    await client.connect();
+    db = client.db();
+    console.log('Connected to MongoDB');
+    console.log('Database name:', db.databaseName);
+    
+    // Create indexes for better performance
+    await createIndexes();
+  } catch (error) {
+    console.error('MongoDB connection error:', error);
+    process.exit(1);
+  }
 }
 
-function validateCollection(collection: string): boolean {
+// Create indexes
+async function createIndexes() {
+  try {
+    await db.collection('questions').createIndex({ category_id: 1 });
+    await db.collection('questions').createIndex({ _id: 1 });
+    await db.collection('answers').createIndex({ question_id: 1 });
+    await db.collection('answers').createIndex({ _id: 1 });
+    await db.collection('questions_categories').createIndex({ _id: 1 });
+    await db.collection('tests').createIndex({ _id: 1 });
+    await db.collection('resources').createIndex({ _id: 1 });
+    console.log('Indexes created successfully');
+  } catch (error) {
+    console.warn('Index creation warning:', error);
+  }
+}
+
+// Helper functions
+function validateCollection(collection) {
   const allowedCollections = [
     'questions',
     'answers', 
@@ -38,16 +62,20 @@ function validateCollection(collection: string): boolean {
     'tests',
     'resources',
     'test_results',
-    'users'
+    'pages',
+    'menus',
+    'exam_configurations',
+    'exam_configuration_items',
+    'roles'
   ];
   return allowedCollections.includes(collection);
 }
 
-function validateObjectId(id: string): boolean {
+function validateObjectId(id) {
   return /^[0-9a-fA-F]{24}$/.test(id);
 }
 
-function convertStringIdsToObjectIds(query: any): any {
+function convertStringIdsToObjectIds(query) {
   if (!query) return query;
   
   const converted = { ...query };
@@ -75,55 +103,22 @@ function convertStringIdsToObjectIds(query: any): any {
   return converted;
 }
 
-async function createIndexes(db: any) {
+// Main API endpoint
+app.post('/mongodb-query', async (req, res) => {
   try {
-    // Create indexes for better performance
-    await db.collection('questions').createIndex({ category_id: 1, is_active: 1 });
-    await db.collection('questions').createIndex({ _id: 1 });
-    await db.collection('answers').createIndex({ question_id: 1 });
-    await db.collection('answers').createIndex({ _id: 1 });
-    await db.collection('questions_categories').createIndex({ is_active: 1 });
-    await db.collection('questions_categories').createIndex({ order_index: 1 });
-    await db.collection('tests').createIndex({ category_id: 1, is_active: 1 });
-    await db.collection('resources').createIndex({ category_id: 1, is_active: 1 });
-    await db.collection('test_results').createIndex({ user_id: 1, created_at: -1 });
-  } catch (error) {
-    console.warn('Index creation warning:', error);
-  }
-}
-
-serve(async (req) => {
-  // Handle CORS preflight requests
-  if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
-  }
-
-  try {
-    const requestData: MongoDBRequest = await req.json();
-    const { collection, operation, query, data, options, pipeline, update, upsert, multi } = requestData;
+    const { collection, operation, query, data, options, pipeline, update, upsert, multi } = req.body;
     
     console.log('MongoDB request:', { collection, operation, query: query ? 'present' : 'none' });
 
     // Validate collection name
     if (!validateCollection(collection)) {
-      throw new Error(`Invalid collection: ${collection}`);
+      return res.status(400).json({
+        success: false,
+        error: `Invalid collection: ${collection}`
+      });
     }
 
-    const MONGODB_URI = Deno.env.get('MONGODB_URI');
-    if (!MONGODB_URI) {
-      throw new Error('MONGODB_URI not configured');
-    }
-
-    // Connect to MongoDB
-    const client = new MongoClient();
-    await client.connect(MONGODB_URI);
-    
-    const db = client.database();
     const col = db.collection(collection);
-
-    // Create indexes for better performance
-    await createIndexes(db);
-
     let result;
     let totalCount = 0;
 
@@ -237,39 +232,20 @@ serve(async (req) => {
         result = await col.distinct(query.field, convertedQuery || {});
         break;
       
-      case 'createIndex':
-        if (!query?.index) {
-          throw new Error('Index specification is required for createIndex operation');
-        }
-        result = await col.createIndex(query.index, query.options || {});
-        break;
-      
-      case 'listIndexes':
-        result = await col.listIndexes().toArray();
-        break;
-      
-      case 'dropIndex':
-        if (!query?.indexName) {
-          throw new Error('Index name is required for dropIndex operation');
-        }
-        result = await col.dropIndex(query.indexName);
-        break;
-      
       // Specialized operations for the application
       case 'getQuestionsByCategory':
         if (!query?.category_id) {
           throw new Error('category_id is required for getQuestionsByCategory operation');
         }
         const questions = await col.find({
-          category_id: new ObjectId(query.category_id),
-          is_active: true
+          category_id: new ObjectId(query.category_id)
         }).sort({ created_at: -1 }).toArray();
         
         // Fetch answers for each question
         for (const question of questions) {
           const answers = await db.collection('answers').find({
             question_id: question._id
-          }).sort({ order_index: 1 }).toArray();
+          }).sort({ sort: 1 }).toArray();
           question.answers = answers;
         }
         
@@ -281,8 +257,7 @@ serve(async (req) => {
           throw new Error('category_id and count are required for getRandomQuestions operation');
         }
         const allQuestions = await col.find({
-          category_id: new ObjectId(query.category_id),
-          is_active: true
+          category_id: new ObjectId(query.category_id)
         }).toArray();
         
         // Shuffle and take random questions
@@ -293,7 +268,7 @@ serve(async (req) => {
         for (const question of randomQuestions) {
           const answers = await db.collection('answers').find({
             question_id: question._id
-          }).sort({ order_index: 1 }).toArray();
+          }).sort({ sort: 1 }).toArray();
           question.answers = answers;
         }
         
@@ -306,10 +281,9 @@ serve(async (req) => {
         }
         const searchQuery = {
           $or: [
-            { question_text: { $regex: query.searchTerm, $options: 'i' } },
-            { question_text_hy: { $regex: query.searchTerm, $options: 'i' } }
-          ],
-          is_active: true
+            { question: { $regex: query.searchTerm, $options: 'i' } },
+            { name: { $regex: query.searchTerm, $options: 'i' } }
+          ]
         };
         
         if (query.category_id) {
@@ -323,10 +297,7 @@ serve(async (req) => {
         throw new Error(`Unknown operation: ${operation}`);
     }
 
-    // Close connection
-    client.close();
-
-    const response: any = { success: true, data: result };
+    const response = { success: true, data: result };
     
     // Add pagination info if applicable
     if (totalCount > 0) {
@@ -338,26 +309,33 @@ serve(async (req) => {
       };
     }
 
-    return new Response(
-      JSON.stringify(response),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
-      }
-    );
+    // console.log('Result:', result.length || 1, 'documents');
+    res.json(response);
 
   } catch (error) {
     console.error('MongoDB Error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: errorMessage 
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500 
-      }
-    );
+    res.status(500).json({
+      success: false,
+      error: errorMessage
+    });
   }
 });
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// Start server
+async function startServer() {
+  await connectToMongoDB();
+  
+  app.listen(PORT, () => {
+    console.log(`MongoDB API server running on port ${PORT}`);
+    console.log(`Health check: http://localhost:${PORT}/health`);
+    console.log(`API endpoint: http://localhost:${PORT}/mongodb-query`);
+  });
+}
+
+startServer().catch(console.error);
