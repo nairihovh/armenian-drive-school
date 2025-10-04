@@ -36,9 +36,9 @@ export default function CategoriesPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {categories.map((category) => (
               <Card
-                key={category.id}
+                key={category._id}
                 className="p-6 hover-scale card-elevated cursor-pointer group"
-                onClick={() => navigate(`/test/${category.id}`)}
+                onClick={() => navigate(`/test/${category._id}`)}
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -59,7 +59,7 @@ export default function CategoriesPage() {
                 
                 <Button className="w-full btn-hero" onClick={(e) => {
                   e.stopPropagation();
-                  navigate(`/test/${category.id}`);
+                  navigate(`/test/${category._id}`);
                 }}>
                   Սկսել թեստը
                 </Button>

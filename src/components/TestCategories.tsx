@@ -72,9 +72,9 @@ export const TestCategories = () => {
             const color = defaultColors[index % defaultColors.length];
             
             return (
-              <CategoryCard 
-                key={category.id}
-                title={category.name_hy}
+            <CategoryCard
+              key={category._id}
+              title={category.name_hy}
                 description={category.description || "Ուսումնասիրեք այս կատեգորիայի հարցերը"}
                 questionCount={0}
                 icon={IconComponent}

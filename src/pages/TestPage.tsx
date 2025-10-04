@@ -55,7 +55,7 @@ export default function TestPage() {
   const handleAnswerSelect = (answerId: string) => {
     setSelectedAnswers({
       ...selectedAnswers,
-      [currentQuestion.id]: answerId,
+      [currentQuestion._id]: answerId,
     });
   };
 
@@ -73,9 +73,9 @@ export default function TestPage() {
 
   const handleFinish = () => {
     const correctAnswers = questions.filter((q) => {
-      const selectedAnswerId = selectedAnswers[q.id];
+      const selectedAnswerId = selectedAnswers[q._id];
       const correctAnswer = q.answers.find((a) => a.is_correct);
-      return selectedAnswerId === correctAnswer?.id;
+      return selectedAnswerId === correctAnswer?._id;
     }).length;
 
     const score = Math.round((correctAnswers / questions.length) * 100);
@@ -130,7 +130,7 @@ export default function TestPage() {
           </h2>
 
           <RadioGroup
-            value={selectedAnswers[currentQuestion.id] || ""}
+            value={selectedAnswers[currentQuestion._id] || ""}
             onValueChange={handleAnswerSelect}
             className="space-y-4"
           >
@@ -138,12 +138,12 @@ export default function TestPage() {
               .sort((a, b) => a.order_index - b.order_index)
               .map((answer) => (
                 <div
-                  key={answer.id}
+                  key={answer._id}
                   className="flex items-center space-x-3 p-4 rounded-lg border-2 border-border hover:border-primary transition-colors cursor-pointer"
                 >
-                  <RadioGroupItem value={answer.id} id={answer.id} />
+                  <RadioGroupItem value={answer._id} id={answer._id} />
                   <Label
-                    htmlFor={answer.id}
+                    htmlFor={answer._id}
                     className="flex-1 cursor-pointer text-base md:text-lg"
                   >
                     {answer.answer_text_hy}
@@ -189,10 +189,10 @@ export default function TestPage() {
         <div className="mt-8 flex flex-wrap gap-2 justify-center">
           {questions.map((q, index) => (
             <button
-              key={q.id}
+              key={q._id}
               onClick={() => setCurrentQuestionIndex(index)}
               className={`w-10 h-10 rounded-lg font-semibold transition-all ${
-                selectedAnswers[q.id]
+                selectedAnswers[q._id]
                   ? "bg-primary text-primary-foreground"
                   : index === currentQuestionIndex
                   ? "bg-accent text-accent-foreground ring-2 ring-primary"
